@@ -12,7 +12,7 @@
 
 
 
-:foreach i in=[/interface ethernet find] do={/interface ethernet set l2mtu=1600 numbers=$i}
+:foreach i in=[/interface ethernet find] do={/interface ethernet set l2mtu=2000 numbers=$i}
 
 /interface bridge
 add name=bridge1 vlan-filtering=yes
