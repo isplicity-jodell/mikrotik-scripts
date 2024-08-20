@@ -1,5 +1,5 @@
 /system scheduler
-add interval=1m name=software-updater on-event=software-updater
+add name=software-updater on-event=software-updater
 
 /system script
 add dont-require-permissions=no name=software-updater \
