@@ -8,7 +8,7 @@
 
 
 /tool e-mail
-set address=mail.smtp2go.com from=rtrupdater@isplicity.com port=2525 tls=starttls user=isplicity.com password="Ug45iJnv9bte53fe"
+set server=mail.smtp2go.com from=rtrupdater@isplicity.com port=2525 tls=starttls user=isplicity.com password="Ug45iJnv9bte53fe"
 /system scheduler add name="Firmware Updater" on-event="/system script run BackupAndUpdate;" start-time=$startTime interval=$updateFrequency comment="" disabled=no
 
 /system script
