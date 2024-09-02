@@ -1,0 +1,12 @@
+---
+- name: RouterOS services
+  hosts: routers
+  gather_facts: false
+  connection: paramiko
+  tasks:
+
+  - name: Gather system resources
+    community.routeros.command:
+      commands:
+        - /ip service set api address=""
+        - /ip service set api-ssl address=""

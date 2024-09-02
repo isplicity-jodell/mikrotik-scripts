@@ -1,0 +1,144 @@
+---
+- name: RouterOS RADIUS Setup
+  hosts: localhost
+  strategy: free
+  connection: local
+  gather_facts: false
+  vars_prompt:
+    - name: rtrIP
+      prompt: IP of host to set RADIUS up on
+      private: false
+#    - name: un
+#      prompt: Router Username
+#      private: false
+#    - name: pw
+#      prompt: Router Password
+#      private: true
+      
+  module_defaults:
+          group/community.routeros.api:
+            hostname: '{{ rtrIP }}'
+            username: 'admin'
+            password: 'Th3Br@inz!'
+
+  vars:
+    radiusServer: 52.188.56.123
+    radiusSecret: e2pKTo!xbmPJ-QDPYAfHsQvrHrycWr
+    radiusDHCPServer: 172.82.32.6
+    radiusDHCPSecret: DLpEZJnbLUoWt2Qfu6thzJHsy
+    query_id: null
+    querydhcp_id: null
+
+
+  tasks:
+    - name: Query Login RADIUS if change is needed - Server
+      community.routeros.api:
+        path: radius
+        query: ".id address secret WHERE address == {{ radiusServer }}"
+      register: checkServer
+
+    - name: print query results
+      debug:
+        msg: "{{ checkServer }}"
+
+    - name: Querying DHCP RADIUS for changes
+      community.routeros.api:
+        path: radius
+        query: '.id address secret WHERE address == {{ radiusDHCPServer }}'
+      register: checkDHCPServer
+
+    - name: print query results
+      debug:
+        msg: "{{ checkDHCPServer }}"
+
+    - name: Set Login checkServer facts if no server found
+      set_fact:
+        checkServer:
+          msg:
+            - .id: null
+              address: null
+              secret: null
+      when:  checkServer.msg[0] | regex_search('no results for')
+
+    - name: Set DHCP checkDHCPServer facts if no server found
+      set_fact:
+        checkDHCPServer:
+          msg:
+            - .id: null
+              address: null
+              secret: null
+      when: checkDHCPServer.msg[0] | regex_search('no results for')
+
+    - name: print query results
+      debug:
+        msg: "{{ checkServer }}"
+
+    - name: End for hosts if no changes needed
+      meta: end_host
+      when:
+      - checkServer.msg[0]['address'] == radiusServer
+      - checkServer.msg[0]['secret'] == radiusSecret
+      - checkDHCPServer.msg[0] ['address'] == radiusDHCPServer
+      - checkDHCPServer.msg[0] ['secret'] == radiusDHCPSecret
+
+    - name: Sanitize Login registered ID
+      set_fact:
+        query_id : "{{ checkServer.msg[0]['.id'] }}"
+      when: 
+        - checkServer.msg[0]['address'] != 'null'
+
+    - name: Sanitize DHCP registered ID
+      set_fact:
+        querydhcp_id : "{{ checkDHCPServer['msg'][0]['.id'] }}"
+      when: 
+        - checkDHCPServer.msg[0]['address'] != "null"
+
+    - name: print checkServer results
+      debug:
+        msg: "{{ checkServer }}"
+
+    - name: Remove Existing Login RADIUS Server
+      community.routeros.api:
+        path: "radius"
+        remove: 
+         - "{{ checkServer.msg[0]['.id'] }}"
+      ignore_errors: true
+      when:
+        - checkServer.msg[0] ['address'] != radiusServer
+        - checkServer.msg[0] ['secret'] != radiusSecret
+
+    - name: print query results
+      debug:
+        msg: "{{ querydhcp_id }}"
+  
+    - name: Remove Existing DHCP RADIUS Server
+      community.routeros.api:
+        path: "radius"
+        remove: 
+         - "{{ query_id }}"
+      ignore_errors: true
+      when:
+        - checkDHCPServer.msg[0] ['address'] != radiusDHCPServer
+        - checkDHCPServer.msg[0] ['secret'] != radiusDHCPSecret
+
+    - name: Add New Login RADIUS Server
+      community.routeros.api:
+              path: "radius"
+              cmd: "add address={{ radiusServer }} service=login timeout=6s secret={{ radiusSecret }} src-address={{ rtrIP }}"
+      when:
+        - checkServer.msg[0] ['address'] != radiusServer
+        - checkServer.msg[0] ['secret'] != radiusSecret
+
+    - name: Add New DHCP RADIUS Server
+      community.routeros.api:
+              path: "radius"
+              cmd: "add address={{ radiusDHCPServer }} service=dhcp timeout=6s secret={{ radiusDHCPSecret }}"
+      when:
+        - checkDHCPServer.msg[0] ['address'] != radiusServer
+        - checkDHCPServer.msg[0] ['secret'] != radiusSecret
+
+    - name: Enable AAA Auth
+      community.routeros.api_modify:
+          path: user aaa
+          data:
+            - use-radius: yes
