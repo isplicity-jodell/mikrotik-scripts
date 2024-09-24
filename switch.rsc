@@ -1,14 +1,30 @@
-# model = CRS309-1G-8S+
+# Isplicity Switch Script
 {
-:global sysName "WestBethany"
-:global swIP "10.200.21.2"
-:global swSM "24"
-:global swGW "10.200.21.1"
+:global sysName "isplicity"
+
+#Switch IP
+:global swIP "10.10.10.10"
+
+#Subnet mask in cidr format, such as /24 /25 /26 etc... (leave the / off)
+:global swSM "24" 
+
+#Gateway IP
+global swGW "10.200.21.1" 
+
+#Set up the VLANs you want added here. These will be tagged across all interfaces.
 :global bridgeVLANs [:toarray value="101,1210,2010,2380,2381,2410,2411,900"];
+
+#Management VLAN
 :global mgmtVLAN "1210"
-:global snmpCommunity "tekwav"
-:global sntpServer "208.67.102.151"
-:local swPW "changeme"
+
+#Set up SNMP Community
+:global snmpCommunity "isplicity"
+
+#Set up SNTP
+:global sntpServer "0.pool.ntp.org"
+
+#Set the switch password for admin user
+:local swPW "isplicity"
 
 
 
