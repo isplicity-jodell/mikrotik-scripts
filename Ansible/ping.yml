@@ -1,0 +1,38 @@
+---
+- name: Ping
+  hosts: 'localhost'
+  strategy: free
+  connection: local
+  gather_facts: false
+  vars_prompt:
+    - name: hostIP
+      prompt: Host to ping from
+      private: false
+    - name: pingDest
+      prompt: IP to Ping
+      private: false
+    - name: un
+      prompt: Router Username
+      private: false
+    - name: pw
+      prompt: Router Password
+      private: true
+  module_defaults:
+          group/community.routeros.api:
+            hostname: '{{ hostIP }}'
+            username: "{{ un }}"
+            password: "{{ pw }}"
+
+
+  tasks:
+    - name: Add New RADIUS Server
+      community.routeros.api:
+        path: "ping"
+        cmd: "/ping address={{ pingDest }} count=10"
+        #cmd: "ping address={{ pingDest }} count=10 interval=500"
+      register: pingReply
+    
+    - name: Response
+      debug:
+        msg: "{{ pingReply.msg[9] }}"
+
