@@ -1,0 +1,35 @@
+---
+- name: RouterOS Firewall Setup
+  hosts: routers
+  #hosts: lab
+  strategy: free
+  connection: local
+  gather_facts: false
+  vars_prompt:
+#    - name: hostIP
+#      prompt: Host to execute on
+#      private: false
+    - name: un
+      prompt: Router Username
+      default: admin
+      private: false
+    - name: pw
+      prompt: Router Password
+      private: true
+  
+  module_defaults:
+          group/community.routeros.api:
+            hostname: '{{ inventory_hostname }}'
+            username: '{{ un }}'
+            password: '{{ pw }}'
+
+
+  tasks:    
+
+    - name: Disable SIP Helper
+      community.routeros.api_modify:
+        path: ip firewall service-port
+        data:
+          - name: sip
+            disabled: yes
+
